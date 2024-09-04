@@ -1,0 +1,4 @@
+*                      @intuitivo-ai/infra
+/.github               @intuitivo-ai/mlops
+/scripts/functions.sh    @intuitivo-ai/mlops
+/scripts/requirements.sh    @intuitivo-ai/mlops

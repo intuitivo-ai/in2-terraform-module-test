@@ -1,0 +1,147 @@
+name: Terraform Plan
+
+on:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        required: true
+        type: string
+      ENVIRONMENT:
+        required: true
+        type: string
+      LAMBDA:
+        required: false
+        type: boolean
+        default: false
+      REQUIREMENTS:
+        required: false
+        type: boolean
+        default: false
+      TF_PATH:
+        required: false
+        type: string
+        default: './'
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      INFRACOST_API_KEY:
+        required: false
+      PERSONAL_ACCESS_TOKEN:
+        required: false
+      GOOGLE_CREDENTIALS:
+        required: false
+      GH_ADMIN_TOKEN:
+        required: false
+
+env:
+  GITHUB_ACTOR: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+  TF_VAR_branch: ${{ github.ref_name }}
+  TF_VAR_commit_id: ${{ github.sha }}
+  TF_VAR_gh_admin_token: ${{ secrets.GH_ADMIN_TOKEN }}
+  TF_VAR_gh_run_attempt: ${{ github.run_attempt }}
+  TF_VAR_gh_run_number: ${{ github.run_number }}
+  VAR_FILE: ${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}
+
+jobs:
+  terraform-plan:
+    runs-on: [ self-hosted, linux, intuitivo ]
+    env:
+      GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+    concurrency:
+      group: terraform-plan-${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}-${{ github.ref_name }}
+    name: Plan
+    defaults:
+      run:
+        working-directory: ${{ inputs.TF_PATH }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name:  Check backend file
+        id: check-file
+        run: |
+          if [ -e "${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}.backend" ]; then
+            echo "El archivo de configuración del backend se encontró."
+            echo "backendFile=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup Terraform
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper : false
+      - name: Configure AWS credentials
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.AWS_REGION }}
+      - name: Create lambda zip files
+        if: ${{ inputs.LAMBDA && steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          cd ..
+          chmod +x ./scripts/*
+          ./scripts/create_zip_files.sh
+          cd -
+      - name: Install workflow requirements
+        if: ${{ inputs.REQUIREMENTS }}
+        run: |
+          cd ..
+          chmod +x ./scripts/*
+          ./scripts/requirements.sh
+          cd -
+      - name: Init
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          terraform init -reconfigure -backend-config=${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}.backend
+      - name: Detect import template
+        run: |
+          original_filename="import-${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}.import"
+          new_filename="import-${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}.tf"
+
+          if [ -f "$original_filename" ]; then
+            mv "$original_filename" "$new_filename"
+            echo "Import file $new_filename created."
+          else
+            echo "No import file detected for ${{ inputs.ENVIRONMENT }} in region ${{ inputs.AWS_REGION }}."
+          fi
+      - name: Validate
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          terraform validate -json
+      - name: Plan
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          terraform plan -var-file=$VAR_FILE.tfvars -input=false -lock=false -out=$VAR_FILE.plan
+      - name: Show outputs
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          terraform output
+      - name: Save plan as JSON
+        id: tf-json-plan
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        run: |
+          terraform show -json $VAR_FILE.plan > $VAR_FILE.json
+          echo "plan_file=$VAR_FILE.json" >> $GITHUB_OUTPUT
+      - name: Upload terraform json plan
+        if: ${{ steps.check-file.outputs.backendFile == 'true' }}
+        uses: actions/upload-artifact@v4
+        env:
+          PLAN_FILE: ${{ steps.tf-json-plan.outputs.plan_file }}
+        with:
+          name: ${{ env.PLAN_FILE }}
+          overwrite: true
+          path: ${{ inputs.TF_PATH }}/${{ env.PLAN_FILE }}
+          retention-days: 1
+      - name: Setup Infracost
+        if: ${{ env.INFRACOST_API_KEY != '' }}
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+      - name: Infracost report
+        if: ${{ env.INFRACOST_API_KEY != '' }}
+        run: |
+          infracost breakdown --path=. --project-name $VAR_FILE --terraform-var-file $VAR_FILE.tfvars --format=table

@@ -1,0 +1,2 @@
+dynamodb_table = "in2-terraform-lock-system-production"
+key            = "in2-terraform-module-test/wallet-development-us-east-1.tfstate"
