@@ -1,0 +1,65 @@
+name: Create IAM Policy
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'submodule/*'
+  workflow_dispatch:
+    inputs:
+      ACTION:
+        description: ''
+        required: true
+        default: plan
+        type: choice
+        options:
+        - plan
+        - deploy
+      ENVIRONMENT:
+        description: ''
+        required: false
+        default: infra-devops-sandbox
+        type: choice
+        options:
+        - infra-devops-sandbox
+
+jobs:
+  infra-devops-sandbox_plan:
+    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' ) || ( inputs.ACTION && inputs.ENVIRONMENT == 'infra-devops-sandbox' ) }}
+    name: Devops-sandbox
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+        - infra-devops-sandbox
+        region:
+        - us-east-1
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      AWS_REGION: ${{ matrix.region }}
+      ENVIRONMENT: ${{ matrix.env }}
+      TF_PATH: submodule
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  infra-devops-sandbox_deploy:
+    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' ) || ( inputs.ACTION == 'deploy' && inputs.ENVIRONMENT == 'infra-devops-sandbox' ) }}
+    name: Devops-sandbox
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        env:
+        - infra-devops-sandbox
+        region:
+        - us-east-1
+    needs:
+    - infra-devops-sandbox_plan
+    uses: ./.github/workflows/terraform-apply.yml
+    with:
+      AWS_REGION: ${{ matrix.region }}
+      ENVIRONMENT: ${{ matrix.env }}
+      TF_PATH: submodule
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
