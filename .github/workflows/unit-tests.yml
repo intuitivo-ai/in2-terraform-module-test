@@ -34,6 +34,7 @@ on:
 
 env:
   DEFAULT_DOCKER_TAG: ${{ github.repository }}
+  DOCKER_IMAGE: ${{ inputs.DOCKER_IMAGE }}
   REGISTRY: ${{ secrets.REGISTRY }}
 
 jobs:
@@ -62,44 +63,29 @@ jobs:
       - name: Pull image
         if: ${{ inputs.RUN != 'false' }}
         run: |
-          if [ -z ${{ inputs.DOCKER_IMAGE }} ]; then
-            COMMIT_ID="${GITHUB_SHA}"
-            ORG="${GITHUB_REPOSITORY_OWNER}"
-            REPOSITORY=$(echo "${GITHUB_REPOSITORY}" | sed "s|${ORG}/||g")
-
-            docker pull ${{ secrets.REGISTRY }}/${REPOSITORY}:${GITHUB_SHA}
-            docker tag  ${{ secrets.REGISTRY }}/${REPOSITORY}:${GITHUB_SHA} $DEFAULT_DOCKER_TAG
-          else
-            docker pull ${{ inputs.DOCKER_IMAGE }}
-          fi
+          chmod -R +x ./scripts
+          source scripts/test_commands.sh
+          docker_pull_image
       - name: Run tests
         if: ${{ inputs.RUN != 'false' && inputs.TYPE != 'terraform' }}
         run: |
-          chmod +x ./scripts/*
-          if [ -z ${{ inputs.DOCKER_IMAGE }} ]; then
-            ORG="${GITHUB_REPOSITORY_OWNER}"
-            REPOSITORY=$(echo "${GITHUB_REPOSITORY}" | sed "s|${ORG}/||g")
-            docker run --rm --entrypoint "" -v $PWD/coverage/:/coverage/ ${{ secrets.REGISTRY }}/${REPOSITORY}:${GITHUB_SHA} scripts/run_tests.sh ${{ inputs.TYPE }}
-          else
-            docker run -w /tmp/${GITHUB_REPOSITORY} --rm --entrypoint "" -v $PWD:/tmp/${GITHUB_REPOSITORY} ${{ inputs.DOCKER_IMAGE }} scripts/run_tests.sh ${{ inputs.TYPE }}
-          fi
+          chmod -R +x ./scripts
+          source scripts/test_commands.sh
+          docker_run_tests ${{ inputs.TYPE }}
       - name: Run local tests
         if: ${{ inputs.RUN != 'false' && inputs.TYPE != 'default' }}
         run: |
-          chmod +x ./scripts/*
+          chmod -R +x ./scripts
           scripts/run_tests.sh ${{ inputs.TYPE }}
       - name: Clear images
         if: ${{ inputs.CLEAR_CACHE && inputs.TYPE == 'default' && steps.run_tests.outcome == 'success' }}
         run: |
-          if [ -z ${{ inputs.DOCKER_IMAGE }} ]; then
-            IMAGE_ID=$(docker images -q $DEFAULT_DOCKER_TAG)
-          else
-            IMAGE_ID=$(docker images -q ${{ inputs.DOCKER_IMAGE }})
-          fi
-          docker rmi -f $IMAGE_ID
+          chmod -R +x ./scripts
+          source scripts/test_commands.sh
+          docker_clear_image
       - name: Coverage Report
         if: ${{ steps.pr_number.outputs.pr_number != 0 && inputs.TYPE == 'coverage' }}
         id: coverage
         run: |
-          chmod +x ./scripts/*
+          chmod -R +x ./scripts
           ./scripts/coverage_report.sh

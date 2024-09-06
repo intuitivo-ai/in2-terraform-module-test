@@ -2,3 +2,4 @@
 /.github               @intuitivo-ai/mlops
 /scripts/functions.sh    @intuitivo-ai/mlops
 /scripts/requirements.sh    @intuitivo-ai/mlops
+/scripts/test_commands.sh    @intuitivo-ai/mlops
