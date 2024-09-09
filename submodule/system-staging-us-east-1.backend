@@ -1,2 +1,1 @@
-dynamodb_table = "in2-terraform-lock-system-production"
-key            = "in2-terraform-module-test/system-staging-us-east-1.tfstate"
+key = "in2-terraform-module-test/system-staging-us-east-1.tfstate"
