@@ -7,8 +7,10 @@ case $TYPE in
 default)
   ./scripts/requirements.sh
   echo "Run tests"
-  pytest --cov .
-  chown -vR 1000:1000 .
+  if ls tests/test_*.py 1> /dev/null 2>&1; then
+    pytest --cov .
+    chown -vR 1000:1000 .
+  fi
   ;;
 terraform)
   echo "Run tests"
