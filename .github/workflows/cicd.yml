@@ -12,14 +12,7 @@ on:
         options:
           - true
           - false
-      ENVIRONMENT:
-        description: ''
-        required: false
-        default: infra-devops-sandbox
-        type: choice
-        options:
-        - infra-devops-sandbox
-        - main-account
+
 jobs:
   test:
     name: Tests
@@ -38,32 +31,8 @@ jobs:
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  infra-devops-sandbox_plan:
-    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' ) || ( inputs.ACTION && inputs.ENVIRONMENT == 'infra-devops-sandbox' ) }}
-    name: Infra Devops-sandbox
-    uses: ./.github/workflows/terraform-plan.yml
-    with:
-      AWS_REGION: us-east-1
-      ENVIRONMENT: infra-devops-sandbox
-      TF_PATH: submodule
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  infra-devops-sandbox_deploy:
-    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' ) || ( inputs.ACTION == 'deploy' && inputs.ENVIRONMENT == 'infra-devops-sandbox' ) }}
-    name: Infra Devops-sandbox
-    needs:
-    - infra-devops-sandbox_plan
-    uses: ./.github/workflows/terraform-apply.yml
-    with:
-      AWS_REGION: us-east-1
-      ENVIRONMENT: infra-devops-sandbox
-      TF_PATH: submodule
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  all-accounts_plan:
-    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' ) || ( inputs.ACTION && inputs.ENVIRONMENT == 'main-account' ) }}
+  terraform_plan:
+    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
     name: All accounts
     strategy:
       fail-fast: false
@@ -92,7 +61,7 @@ jobs:
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  all-accounts_deploy:
+  terraform_deploy:
     if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
     name: All accounts
     strategy:
