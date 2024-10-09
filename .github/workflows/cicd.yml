@@ -12,7 +12,14 @@ on:
         options:
           - true
           - false
-
+      ENVIRONMENT:
+        description: ''
+        required: false
+        default: infra-devops-sandbox
+        type: choice
+        options:
+        - infra-devops-sandbox
+        - main-account
 jobs:
   test:
     name: Tests
@@ -56,7 +63,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   all-accounts_plan:
-    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
+    if: ${{ ( github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' ) || ( inputs.ACTION && inputs.ENVIRONMENT == 'main-account' ) }}
     name: All accounts
     strategy:
       fail-fast: false
