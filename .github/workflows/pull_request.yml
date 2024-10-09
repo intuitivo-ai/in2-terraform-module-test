@@ -1,0 +1,63 @@
+name: Pull Request
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  clean_old_comments :
+    name: Delete old Comments
+    runs-on: [ self-hosted, linux ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get PR number
+        id: pr_number
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod -R +x ./scripts
+          ./scripts/get_pr_number.sh
+      - name: Delete old PR Comments
+        if: ${{ steps.pr_number.outputs.pr_number != 0 }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const script = require('./scripts/delete_pr_comments.sh')
+            console.log(script({github, context}))
+  terraform_plan:
+    if: ${{ !github.event.pull_request.draft  }}
+    name: Terraform plan
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+        - ai-development
+        - ai-production
+        - ai-staging
+        - edge-development
+        - edge-production
+        - edge-showroom
+        - edge-staging
+        - infra-devops-sandbox
+        - infra-showroom
+        - system-development
+        - system-production
+        - system-sandbox
+        - system-staging
+        region:
+        - us-east-1
+    needs:
+      - clean_old_comments
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      AWS_REGION: ${{ matrix.region }}
+      ENVIRONMENT: ${{ matrix.env }}
+      TF_PATH: submodule
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
