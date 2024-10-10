@@ -1,6 +1,7 @@
 *                      @intuitivo-ai/infra
 /.github               @intuitivo-ai/mlops
 /scripts/functions.sh    @intuitivo-ai/mlops
+/scripts/release_notes.sh    @intuitivo-ai/mlops
 /scripts/requirements.sh    @intuitivo-ai/mlops
 /scripts/run_tests.sh    @intuitivo-ai/mlops
 /scripts/test_commands.sh    @intuitivo-ai/mlops
