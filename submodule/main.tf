@@ -32,7 +32,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "in2-terraform-in2-github-actions-test"
+    bucket = "in2-terraform-module-test"
     region = "us-east-1"
   }
 }
