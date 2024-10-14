@@ -93,18 +93,3 @@ jobs:
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  create_release:
-    runs-on: [ self-hosted, linux, intuitivo ]
-    needs:
-    - terraform_deploy
-    name: Create Release
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Create Release Notes
-        id: release_notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          chmod -R +x ./scripts
-          ./scripts/release_notes.sh
