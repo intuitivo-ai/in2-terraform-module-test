@@ -1,7 +1,7 @@
 provider "aws" {
   region = "${var.region}"
   assume_role {
-    role_arn     = null
+    role_arn     = var.assume_role
     session_name = "GH-Actions"
   }
   default_tags {
@@ -17,7 +17,7 @@ provider "aws" {
   alias  = "US"
   region = "us-east-1"
   assume_role {
-    role_arn     = null
+    role_arn     = var.assume_role
     session_name = "GH-Actions"
   }
   default_tags {
@@ -32,7 +32,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "in2-terraform-module-test"
+    bucket = "in2-terraform-in2-github-actions-test"
     region = "us-east-1"
   }
 }
