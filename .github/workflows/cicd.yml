@@ -40,17 +40,41 @@ jobs:
         env:
         - ai-development
         - ai-production
+        - ai-showroom
         - ai-staging
+        - core-development
+        - core-devops-sandbox
+        - core-production
+        - core-sandbox
+        - core-showroom
+        - core-staging
         - edge-development
         - edge-production
         - edge-showroom
         - edge-staging
+        - infra-ai-development
+        - infra-ai-production
+        - infra-ai-staging
+        - infra-development
         - infra-devops-sandbox
+        - infra-edge-development
+        - infra-edge-production
+        - infra-edge-showroom
+        - infra-edge-staging
+        - infra-main-account
+        - infra-production
+        - infra-sandbox
         - infra-showroom
-        - system-development
-        - system-production
-        - system-sandbox
-        - system-staging
+        - infra-staging
+        - infra-system-development
+        - infra-system-production
+        - infra-system-sandbox
+        - infra-system-staging
+        - wallet-development
+        - wallet-production
+        - wallet-sandbox
+        - wallet-showroom
+        - wallet-staging
         region:
         - us-east-1
     uses: ./.github/workflows/terraform-plan.yml
@@ -70,17 +94,41 @@ jobs:
         env:
         - ai-development
         - ai-production
+        - ai-showroom
         - ai-staging
+        - core-development
+        - core-devops-sandbox
+        - core-production
+        - core-sandbox
+        - core-showroom
+        - core-staging
         - edge-development
         - edge-production
         - edge-showroom
         - edge-staging
+        - infra-ai-development
+        - infra-ai-production
+        - infra-ai-staging
+        - infra-development
         - infra-devops-sandbox
+        - infra-edge-development
+        - infra-edge-production
+        - infra-edge-showroom
+        - infra-edge-staging
+        - infra-main-account
+        - infra-production
+        - infra-sandbox
         - infra-showroom
-        - system-development
-        - system-production
-        - system-sandbox
-        - system-staging
+        - infra-staging
+        - infra-system-development
+        - infra-system-production
+        - infra-system-sandbox
+        - infra-system-staging
+        - wallet-development
+        - wallet-production
+        - wallet-sandbox
+        - wallet-showroom
+        - wallet-staging
         region:
         - us-east-1
     needs:

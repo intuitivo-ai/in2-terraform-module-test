@@ -1,0 +1,42 @@
+name: Generate terraform docs
+on:
+  - pull_request
+
+env:
+  GITHUB_ACTOR: "in2-bot"
+  GITHUB_EMAIL: "devops@intuitivo.com"
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Render terraform docs inside the README.md and push changes back to PR branch
+        uses: terraform-docs/gh-actions@v1.0.0
+        with:
+          config-file: terraform-docs.yaml
+          working-dir: .
+          output-file: README.md
+          output-method: inject
+          git-push: "true"
+          git-push-user-name: ${{ env.GITHUB_ACTOR }}
+          git-push-user-email: ${{ env.GITHUB_EMAIL }}
+
+#    - name: Pull request comment
+#      id: comment
+#      uses: actions/github-script@v6
+#      with:
+#        github-token: ${{ secrets.GITHUB_TOKEN }}
+#        script: |
+#          const output = `Terraform-docs has updated the README.md.
+#
+#          ${process.env.readme}`
+#          github.rest.issues.createComment({
+#            issue_number: context.issue.number,
+#            owner: context.repo.owner,
+#            repo: context.repo.repo,
+#            body: output
+#          })

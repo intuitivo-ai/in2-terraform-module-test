@@ -56,6 +56,16 @@ env:
   VAR_FILE: ${{ inputs.ENVIRONMENT }}-${{ inputs.AWS_REGION }}
 
 jobs:
+  iam_roles_policies:
+    name: IAM role with policies
+    uses: ./.github/workflows/iam-roles-policies.yml
+    with:
+      AWS_REGION: ${{ inputs.AWS_REGION }}
+      ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+      TF_PATH: ${{ inputs.TF_PATH }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   terraform-apply:
     runs-on: [ self-hosted, linux, intuitivo ]
     environment: ${{ inputs.ENVIRONMENT }}
@@ -64,6 +74,8 @@ jobs:
     concurrency:
       group: terraform-apply-${{ inputs.ENVIRONMENT }}
     name: Apply
+    needs:
+      - iam_roles_policies
     defaults:
       run:
         working-directory: ${{ inputs.TF_PATH }}
@@ -81,11 +93,14 @@ jobs:
           aws-secret-access-key: ${{ needs.iam_roles_policies.outputs.secret_access_key }}
           aws-session-token: ${{ needs.iam_roles_policies.outputs.session_token }}
           aws-region: ${{ inputs.AWS_REGION }}
+      - name: Show AWS user
+        run: |
+          aws sts get-caller-identity
       - name: Create lambda zip files
         if: ${{ inputs.LAMBDA }}
         run: |
           cd ..
-          chmod +x ./scripts/*
+          chmod -R +x ./scripts
           ./scripts/create_zip_files.sh
           cd -
       - name: Update aws-cli
@@ -99,7 +114,7 @@ jobs:
         if: ${{ inputs.REQUIREMENTS }}
         run: |
           cd ..
-          chmod +x ./scripts/*
+          chmod -R +x ./scripts
           ./scripts/requirements.sh
           cd -
       - name: Init
@@ -136,7 +151,7 @@ jobs:
       - name: Unlock
         if: ${{ cancelled() || ( inputs.REFRESH == true && steps.state_lock.outcome != 'success' ) }}
         run: |
-          chmod +x ../scripts/*
+          chmod -R +x ../scripts
           ../scripts/terraform_unlock.sh
       - name: Create Tag
         run: git tag -f "${{ inputs.ENVIRONMENT }}/${{ github.run_number }}" && git push -f origin "${{ inputs.ENVIRONMENT }}/${{ github.run_number }}"
