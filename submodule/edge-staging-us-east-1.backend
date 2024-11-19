@@ -1,1 +1,2 @@
-key = "edge-staging-us-east-1.tfstate"
+dynamodb_table = "arn:aws:dynamodb:us-east-1:706851696280:table/in2-terraform-lock-system-staging"
+key            = "in2-terraform-module-test/edge-staging-us-east-1.tfstate"
