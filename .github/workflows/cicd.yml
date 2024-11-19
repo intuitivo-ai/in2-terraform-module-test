@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         type:
-        - default
+        - coverage
         - terraform
     uses: ./.github/workflows/unit-tests.yml
     with:
