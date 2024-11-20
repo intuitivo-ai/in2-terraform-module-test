@@ -32,7 +32,6 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   environment_prefix:
-    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
     name: Get environment name
     runs-on: ubuntu-latest
     strategy:
@@ -88,7 +87,6 @@ jobs:
           echo "Module Environment: $MODULE_ENVIRONMENT"
 
   terraform_plan:
-    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
     name: Terraform plan
     strategy:
       fail-fast: false
