@@ -1,1 +1,2 @@
-key = "infra-devops-sandbox-us-east-1.tfstate"
+dynamodb_table = "arn:aws:dynamodb:us-east-1:706851696280:table/in2-terraform-lock-infra-devops-sandbox"
+key            = "in2-terraform-module-test/infra-devops-sandbox-us-east-1.tfstate"
