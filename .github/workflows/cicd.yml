@@ -87,10 +87,12 @@ jobs:
         - us-east-1
     needs:
     - terraform_plan
+    - environment_prefix
     uses: ./.github/workflows/terraform-apply.yml
     with:
       AWS_REGION: ${{ matrix.region }}
       ENVIRONMENT: ${{ matrix.env }}
+      MODULE_ENVIRONMENT: ${{ needs.environment_prefix.outputs.MODULE_ENVIRONMENT }}
       TF_PATH: submodule
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
