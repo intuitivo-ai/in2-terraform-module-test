@@ -83,6 +83,9 @@ jobs:
       run:
         working-directory: ${{ inputs.TF_PATH }}
     steps:
+      - name: Verificar input ENVIRONMENT
+        run: |
+          echo ${{inputs.MODULE_ENVIRONMENT }}
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Terraform
