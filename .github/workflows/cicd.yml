@@ -33,7 +33,6 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   environment_prefix:
     name: Get environment name
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
