@@ -2,7 +2,6 @@ name: Continuous Delivery
 
 on:
   push:
-    branches:
   workflow_dispatch:
     inputs:
       TESTS:
@@ -21,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         type:
-        - default
+        - coverage
         - terraform
     uses: ./.github/workflows/unit-tests.yml
     with:
@@ -32,3 +31,186 @@ jobs:
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  environment_prefix:
+    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
+    name: Get environment name
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+        - ai-development
+        - ai-production
+        - ai-showroom
+        - ai-staging
+        - core-development
+        - core-devops-sandbox
+        - core-production
+        - core-sandbox
+        - core-showroom
+        - core-staging
+        - edge-development
+        - edge-production
+        - edge-showroom
+        - edge-staging
+        - infra-ai-development
+        - infra-ai-production
+        - infra-ai-staging
+        - infra-development
+        - infra-devops-sandbox
+        - infra-edge-development
+        - infra-edge-production
+        - infra-edge-showroom
+        - infra-edge-staging
+        - infra-main-account
+        - infra-production
+        - infra-sandbox
+        - infra-showroom
+        - infra-staging
+        - infra-system-development
+        - infra-system-production
+        - infra-system-sandbox
+        - infra-system-staging
+        - wallet-development
+        - wallet-production
+        - wallet-sandbox
+        - wallet-showroom
+        - wallet-staging
+    steps:
+      - name: Configurar entornos
+        run: |
+          echo "ENVIRONMENT=${{ matrix.env }}" >> $GITHUB_ENV
+          MODULE_ENVIRONMENT=$(echo "${{ matrix.env }}" | cut -d'-' -f2-)
+          echo "MODULE_ENVIRONMENT=$MODULE_ENVIRONMENT" >> $GITHUB_OUTPUT
+      - name: Verificar variables
+        run: |
+          echo "Environment: $ENVIRONMENT"
+          echo "Module Environment: $MODULE_ENVIRONMENT"
+
+  terraform_plan:
+    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
+    name: Terraform plan
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+        - ai-development
+        - ai-production
+        - ai-showroom
+        - ai-staging
+        - core-development
+        - core-devops-sandbox
+        - core-production
+        - core-sandbox
+        - core-showroom
+        - core-staging
+        - edge-development
+        - edge-production
+        - edge-showroom
+        - edge-staging
+        - infra-ai-development
+        - infra-ai-production
+        - infra-ai-staging
+        - infra-development
+        - infra-devops-sandbox
+        - infra-edge-development
+        - infra-edge-production
+        - infra-edge-showroom
+        - infra-edge-staging
+        - infra-main-account
+        - infra-production
+        - infra-sandbox
+        - infra-showroom
+        - infra-staging
+        - infra-system-development
+        - infra-system-production
+        - infra-system-sandbox
+        - infra-system-staging
+        - wallet-development
+        - wallet-production
+        - wallet-sandbox
+        - wallet-showroom
+        - wallet-staging
+        region:
+        - us-east-1
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      AWS_REGION: ${{ matrix.region }}
+      ENVIRONMENT: ${{ matrix.env }}
+      TF_PATH: submodule
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  terraform_deploy:
+    if: ${{ github.ref_type == 'branch' && github.event_name == 'push' && github.ref_name == 'main' }}
+    name: Terraform deploy
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+        - ai-development
+        - ai-production
+        - ai-showroom
+        - ai-staging
+        - core-development
+        - core-devops-sandbox
+        - core-production
+        - core-sandbox
+        - core-showroom
+        - core-staging
+        - edge-development
+        - edge-production
+        - edge-showroom
+        - edge-staging
+        - infra-ai-development
+        - infra-ai-production
+        - infra-ai-staging
+        - infra-development
+        - infra-devops-sandbox
+        - infra-edge-development
+        - infra-edge-production
+        - infra-edge-showroom
+        - infra-edge-staging
+        - infra-main-account
+        - infra-production
+        - infra-sandbox
+        - infra-showroom
+        - infra-staging
+        - infra-system-development
+        - infra-system-production
+        - infra-system-sandbox
+        - infra-system-staging
+        - wallet-development
+        - wallet-production
+        - wallet-sandbox
+        - wallet-showroom
+        - wallet-staging
+        region:
+        - us-east-1
+    needs:
+    - terraform_plan
+    - environment_prefix
+    uses: ./.github/workflows/terraform-apply.yml
+    with:
+      AWS_REGION: ${{ matrix.region }}
+      ENVIRONMENT: ${{ matrix.env }}
+      MODULE_ENVIRONMENT: ${{ needs.environment_prefix.outputs.module_environment }}
+      TF_PATH: submodule
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  create_release:
+    runs-on: [ self-hosted, linux, intuitivo ]
+    needs:
+    - terraform_deploy
+    name: Create Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create Release Notes
+        id: release_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod -R +x ./scripts
+          ./scripts/release_notes.sh

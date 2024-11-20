@@ -1,0 +1,2 @@
+dynamodb_table = "arn:aws:dynamodb:us-east-1:706851696280:table/in2-terraform-lock-wallet-staging"
+key            = "in2-terraform-module-test/wallet-staging-us-east-1.tfstate"
