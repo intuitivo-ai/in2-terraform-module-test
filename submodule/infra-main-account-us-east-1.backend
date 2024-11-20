@@ -1,2 +1,1 @@
-dynamodb_table = "arn:aws:dynamodb:us-east-1:706851696280:table/in2-terraform-lock-infra-main-account"
-key            = "in2-terraform-module-test/infra-main-account-us-east-1.tfstate"
+key = "in2-terraform-module-test/infra-main-account-us-east-1.tfstate"
