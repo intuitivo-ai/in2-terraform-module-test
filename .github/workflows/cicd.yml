@@ -77,6 +77,7 @@ jobs:
         - wallet-staging
     steps:
       - name: Configurar entornos
+        id: env
         run: |
           echo "ENVIRONMENT=${{ matrix.env }}" >> $GITHUB_ENV
           MODULE_ENVIRONMENT=$(echo "${{ matrix.env }}" | cut -d'-' -f2-)
@@ -84,8 +85,7 @@ jobs:
       - name: Verificar variables
         run: |
           echo "Environment: $ENVIRONMENT"
-          echo "Module Environment: $MODULE_ENVIRONMENT"
-
+          echo ${{ steps.env.outputs.MODULE_ENVIRONMENT }}
   terraform_plan:
     name: Terraform plan
     strategy:
