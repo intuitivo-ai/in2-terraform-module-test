@@ -163,4 +163,4 @@ jobs:
       - name: Notification
         if: always()
         run: |
-          aws lambda invoke --function-name ${{ steps.lambda_prefix.outputs.MODULE_ENVIRONMENT }}-slash-bot --cli-binary-format raw-in-base64-out --invocation-type Event --payload '{"source":"gh-actions","env":"${{ inputs.ENVIRONMENT }}","repository":"${{ github.event.repository.name }}","username":"${{ github.actor }}","status":"${{ steps.apply.outcome }}"}' response.json
+          aws lambda invoke --function-name try(${{ steps.lambda_prefix.outputs.MODULE_ENVIRONMENT }}, "${{ inputs.ENVIRONMENT }}")-slash-bot --cli-binary-format raw-in-base64-out --invocation-type Event --payload '{"source":"gh-actions","env":"${{ inputs.ENVIRONMENT }}","repository":"${{ github.event.repository.name }}","username":"${{ github.actor }}","status":"${{ steps.apply.outcome }}"}' response.json
