@@ -155,12 +155,7 @@ jobs:
           ../scripts/terraform_unlock.sh
       - name: Create Tag
         run: git tag -f "${{ inputs.ENVIRONMENT }}/${{ github.run_number }}" && git push -f origin "${{ inputs.ENVIRONMENT }}/${{ github.run_number }}"
-      - name: Get lambda prefix
-        id: lambda_prefix
-        run: |
-          MODULE_ENVIRONMENT=$(echo "${{ inputs.ENVIRONMENT }}" | cut -d'-' -f2-)
-          echo "MODULE_ENVIRONMENT=$MODULE_ENVIRONMENT" >> $GITHUB_OUTPUT
       - name: Notification
         if: always()
         run: |
-          aws lambda invoke --function-name ${{ steps.lambda_prefix.outputs.MODULE_ENVIRONMENT }}-slash-bot --cli-binary-format raw-in-base64-out --invocation-type Event --payload '{"source":"gh-actions","env":"${{ inputs.ENVIRONMENT }}","repository":"${{ github.event.repository.name }}","username":"${{ github.actor }}","status":"${{ steps.apply.outcome }}"}' response.json
+          aws lambda invoke --function-name ${{ inputs.ENVIRONMENT }}-slash-bot --cli-binary-format raw-in-base64-out --invocation-type Event --payload '{"source":"gh-actions","env":"${{ inputs.ENVIRONMENT }}","repository":"${{ github.event.repository.name }}","username":"${{ github.actor }}","status":"${{ steps.apply.outcome }}"}' response.json
